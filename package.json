@@ -12,6 +12,7 @@
   "author": "Gabriel Hauschildt",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.21.1",
     "concurrently": "^6.1.0",
     "nodemon": "^2.0.7"
   }

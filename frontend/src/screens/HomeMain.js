@@ -1,41 +1,71 @@
 import React, { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import Aos from "aos"
-import "aos/dist/aos.css"
-import addToTestReducer from "../actions/testActions"
-import RenderTestVariable from "../components/RenderTestVariable"
+
+import axios from "axios"
+
+import Flattener from "../components/Flattener"
 
 const HomeMain = () => {
-  const dispatch = useDispatch()
-
-  const test = useSelector(state => state.test)
-  const { testReducerItem } = test
-
-  const [testVariable, setTestVariable] = useState(testReducerItem)
+  // const [data, setData] = useState("")
+  const [flattenedHeaders, setFlattenedHeaders] = useState([])
+  const [locationArray, setLocationArray] = useState([])
 
   useEffect(() => {
-    Aos.init({
-      duration: 2000,
-      disable: function() {
-        var maxWidth = 800
-        return window.innerWidth < maxWidth
-      }
-    }) // initialize animate on scroll
+    function makeLocationArray(arr) {
+      arr.map(thing => {
+        setLocationArray(prevLoc => [...prevLoc, thing.location])
+        return null
+      })
+
+      // console.log("locArr ", locationArray)
+    }
+
+    function getData() {
+      axios
+        .get("https://randomuser.me/api/?results=20")
+        .then(res => {
+          // setData(res.data.results)
+          makeLocationArray(res.data.results)
+        })
+        .catch(err => console.log("error", err))
+    }
+
+    getData()
   }, [])
 
-  const handleSubmit = (e, string) => {
-    e.preventDefault()
-    dispatch(addToTestReducer(string))
-  }
+  useEffect(() => {
+    function flattenData(arr) {
+      Object.keys(arr).map(key => {
+        if (typeof arr[key] !== "object") {
+          setFlattenedHeaders(prev => [...prev, key])
+        } else {
+          flattenData(arr[key])
+        }
+        return null
+      })
+    }
 
-  return (
-    <div>
-      <form onSubmit={e => handleSubmit(e, testVariable)}>
-        <input onChange={e => setTestVariable(e.target.value)} />
-        <button>Submit</button>
-      </form>
-      <RenderTestVariable testVar={testReducerItem} />
-    </div>
+    if (locationArray.length === 20) {
+      flattenData(locationArray[1])
+    }
+  }, [locationArray])
+
+  useEffect(() => {
+    console.log("flattenedHeaders", flattenedHeaders)
+  }, [flattenedHeaders])
+
+  return flattenedHeaders && locationArray ? (
+    <table>
+      <tbody>
+        <tr>
+          {flattenedHeaders.map(elem => {
+            return <th key={elem}>{elem}</th>
+          })}
+        </tr>
+        <Flattener data={locationArray} headers={flattenedHeaders} />
+      </tbody>
+    </table>
+  ) : (
+    <div>no data</div>
   )
 }
 
